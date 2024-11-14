@@ -1,7 +1,7 @@
-package blocks
+package common 
 
-package object blocks {
-  val firtoolOpts = Array(
+object FirtoolOpts {
+  def firtoolOpts = Array(
     "-disable-all-randomization",
     "-strip-debug-info",
     "--disable-opt",

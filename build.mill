@@ -15,6 +15,9 @@ trait BaseModule extends ScalaModule {
   def scalaVersion = v.scalaVersion
 }
 
+
+object common extends BaseModule
+
 trait ChiselModule extends BaseModule {
   def ivyDeps             = Agg(v.chisel)
   def scalacPluginIvyDeps = Agg(v.chiselPlugin)
@@ -30,12 +33,9 @@ trait ChiselModule extends BaseModule {
     "-Ywarn-unused",
     "-Ymacro-annotations",
   )
+  def moduleDeps = Seq(common)
 }
 
-object counter extends ChiselModule
 
-object b2t extends ChiselModule
-
-object top extends ChiselModule {
-  def moduleDeps = Seq(b2t, counter)
-}
+object chipdev extends ChiselModule
+object top extends ChiselModule
