@@ -1,8 +1,9 @@
-package blocks
+package chipdev
 
 import chisel3._
 import circt.stage.ChiselStage
 import common._
+import chisel3.experimental.dataview._
 
 //The address is a two bit value whose decimal representation determines which output value to use. Append to dout the decimal representation of addr to get the output signal name dout{address decimal value}. For example, if addr=b11 then the decimal representation of addr is 3, so the output signal name is dout3.
 //
@@ -27,23 +28,82 @@ class Out(dataWidth: Int) extends Bundle {
   val dout = Vec(4, UInt(dataWidth.W))
 }
 
+class ExpectedOut(val dataWidth: Int) extends Bundle {
+  val dout0 = UInt(dataWidth.W)
+  val dout1 = UInt(dataWidth.W)
+  val dout2 = UInt(dataWidth.W)
+  val dout3 = UInt(dataWidth.W)
+}
+
+object Out {
+  implicit val newView: DataView[ExpectedOut, Out] = DataView(
+    vab => new Out(vab.dataWidth),
+    _.dout0 -> _.dout(0),
+    _.dout1 -> _.dout(1),
+    _.dout2 -> _.dout(2),
+    _.dout3 -> _.dout(3),
+  )
+}
+
 class SimpleRouter(dataWidth: Int) extends Module {
-  val in  = IO(Input(new In(dataWidth)))
-  val out = IO(Output(new Out(dataWidth)))
+  override def desiredName = s"SimpleRouter_$dataWidth"
 
-  out.dout :#= (0.U).asTypeOf(new Out(dataWidth).dout)
+  val in      = FlatIO(Input(new In(dataWidth)))
+  val dout    = FlatIO(Output(new ExpectedOut(dataWidth)))
+  val outView = { dout.viewAs[Out] }
 
-  when(in.din_en) {
-    out.dout(in.addr) :#= in.din
+  Seq.tabulate(4)(i => outView.dout(i) :#= Mux(in.din_en && in.addr === i.U, in.din, 0.U))
+
+}
+
+class SecondLargest(dataWidth: Int) extends Module {
+  override def desiredName = s"SecondLargest_$dataWidth"
+
+  val din  = IO(Input(UInt(dataWidth.W)))
+  val dout = IO(Output(UInt(dataWidth.W)))
+
+  val largest       = RegInit(0.U(dataWidth.W))
+  val secondLargest = RegInit(0.U(dataWidth.W))
+
+  when(din > largest && din > secondLargest) {
+    largest       :#= din
+    secondLargest :#= largest
+  }.elsewhen(din > secondLargest) {
+    secondLargest :#= din
   }
+
+  // continuous assignment
+  dout :#= secondLargest
+
+}
+
+//Divide an input number by a power of two and round the result to the nearest integer.
+//The power of two is calculated using 2DIV_LOG2 where DIV_LOG2 is a module parameter.
+//Remainders of 0.5 or greater should be rounded up to the nearest integer.
+//If the output were to overflow, then the result should be saturated instead.
+
+class RoundingDivision(divLog2: Int, outWidth: Int) extends Module {
+  val in  = IO(Input(UInt((divLog2 + outWidth).W)))
+  val out = IO(Output(UInt(outWidth.W)))
+
+  out :#= 0.U.asTypeOf(out)
 
 }
 
 object Main extends App {
-  println(
-    ChiselStage.emitSystemVerilog(
-      new SimpleRouter(32),
-      firtoolOpts = FirtoolOpts.firtoolOpts,
-    )
+
+  ChiselStage.emitSystemVerilog(
+    new SimpleRouter(32),
+    firtoolOpts = FirtoolOpts.firtoolOpts,
+  )
+
+  ChiselStage.emitSystemVerilog(
+    new SecondLargest(32),
+    firtoolOpts = FirtoolOpts.firtoolOpts,
+  )
+
+  ChiselStage.emitSystemVerilog(
+    new RoundingDivision(3, 5),
+    firtoolOpts = FirtoolOpts.firtoolOpts,
   )
 }
