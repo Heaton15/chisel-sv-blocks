@@ -1,14 +1,14 @@
 # chisel-sv-blocks
 
 # Blocks
-- sync fifo
+- sync fifo [x]
 - async fifo
+- CDC design
 - round-robin arbiter
 - weighted arbiter
 - glitch-free clock mux
 - SPI controller
 - I2C controller
-- CDC design
 - grey code counter
 - edge detector
 - parallel-in, serial-out SR
