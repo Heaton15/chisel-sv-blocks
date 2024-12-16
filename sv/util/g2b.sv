@@ -20,9 +20,8 @@ module g2b (  /*AUTOARG*/
 
   always_comb begin
     b_tmp[DATA_WIDTH-1] = g_in[DATA_WIDTH-1];
-    for (int i = DATA_WIDTH - 2; i > 0; i--) begin
+    for (int i = DATA_WIDTH - 2; i >= 0; i--) begin
       b_tmp[i] = g_in[i] ^ b_tmp[i+1];
     end
-
   end
 endmodule
