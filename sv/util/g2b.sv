@@ -14,7 +14,7 @@ module g2b (  /*AUTOARG*/
 
   assign b_out = b_tmp;
 
-  // Grey -> Binary
+  // Gray -> Binary
   // 1. Keep the MSB for the conversion
   // 2. grey code is then g[i] ^ b[i+1]
 

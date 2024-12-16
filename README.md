@@ -18,3 +18,22 @@
 - multi-bit FIFO
 - 2-read-1-write (2W1R) Register File
 - bubble sort
+
+# Util 
+- util/g2b.sv
+- util/b2g.sv
+
+# Clock Domain Crossings
+
+# Synchronizers
+
+# Gray / Binary Encoders
+## Gray To Binary
+1. MSB of Gray and Binary are the same g[MSB] = b[MSB]
+1. The binary bits are then g[i] ^ b[i+1]
+
+## Binary to Grey
+1. MSB of Gray and Binary are the same g[MSB] = b[MSB]
+1. The gray bits are then the xor of the binary b[i] ^ b[i+1]
+
+
