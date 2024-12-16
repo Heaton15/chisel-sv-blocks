@@ -70,46 +70,14 @@ module sync_fifo (  /*AUTOARG*/
     end
   end
 
-
-
-
 endmodule
-
 
 module tb;
 
-  parameter int FIFO_DEPTH = 8;
-  parameter int DATA_WIDTH = 64;
-
-
-  logic [DATA_WIDTH-1:0] dout;  // From dut of sync_fifo.v
-  logic                  empty;  // From dut of sync_fifo.v
-  logic                  full;  // From dut of sync_fifo.v
-  logic                  clock;  // To dut of sync_fifo.v
-  logic [DATA_WIDTH-1:0] din;  // To dut of sync_fifo.v
-  logic                  rd_en;  // To dut of sync_fifo.v
-  logic                  rst;  // To dut of sync_fifo.v
-  logic                  wr_en;  // To dut of sync_fifo.v
-
-
-  // Insert testbench here
-
-  sync_fifo #(  /*AUTOINSTPARAM*/
-      // Parameters
-      .FIFO_DEPTH(FIFO_DEPTH),
-      .DATA_WIDTH(DATA_WIDTH)
-  ) dut (  /*AUTOINST*/
-      // Outputs
-      .dout (dout[DATA_WIDTH-1:0]),
-      .full (full),
-      .empty(empty),
-      // Inputs
-      .clock(clock),
-      .rst  (rst),
-      .din  (din[DATA_WIDTH-1:0]),
-      .wr_en(wr_en),
-      .rd_en(rd_en)
-  );
-
-
 endmodule
+
+// Local Variables:
+// verilog-auto-wire-comment:nil
+// verilog-auto-inst-param-value:t
+// verilog-library-flags:("-f ../../vmode.f")
+// End:
