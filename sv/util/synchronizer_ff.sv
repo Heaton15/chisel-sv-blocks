@@ -19,8 +19,8 @@ module synchronizer_ff (  /*AUTOARG*/
 
   input rst, clk;
 
-  input [DATA_WIDTH-1] in;
-  output [DATA_WIDTH-1] out;
+  input [DATA_WIDTH-1:0] in;
+  output [DATA_WIDTH-1:0] out;
 
   logic [DATA_WIDTH-1:0] sync[SYNC_DEPTH];
 
