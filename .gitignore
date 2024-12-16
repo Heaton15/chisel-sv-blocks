@@ -1,4 +1,5 @@
 .metals
 .bloop
 chisel/*out
-
+sv/*/*.log
+sv/*/*out
