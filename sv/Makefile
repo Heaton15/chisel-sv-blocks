@@ -28,4 +28,6 @@ vmode.f:
 	@if [[ -f $(FILE) ]]; then \
 		rm $(FILE); \
 	fi
-	@$(foreach file, $(ALL_SRC), echo $(file) >> $@;)
+	@for file in $(ALL_SRC); do \
+		echo $(shell pwd)/$$file >> $@; \
+	done
