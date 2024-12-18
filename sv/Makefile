@@ -2,11 +2,7 @@ SHELL := $(shell which bash)
 
 SRC_DIRS := $(shell find . -type d -depth 1)
 
-UTIL := $(shell find ./util -name "*.v" -or -name "*.sv")
 SRC_V := $(shell find . -name "*.v" -or -name "*.sv")
-
-ALL_SRC := $(SRC_V) $(UTIL)
-
 
 .PHONY: vmode.f
 
@@ -28,6 +24,6 @@ vmode.f:
 	@if [[ -f $(FILE) ]]; then \
 		rm $(FILE); \
 	fi
-	@for file in $(ALL_SRC); do \
+	@for file in $(SRC_V); do \
 		echo $(shell pwd)/$$file >> $@; \
 	done

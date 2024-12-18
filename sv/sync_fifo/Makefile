@@ -12,7 +12,7 @@ TOP := tb
 
 VERILATOR := verilator
 
-ARGS := --binary -j 0 ${ALL_SRC} -Mdir ${TOP}-out --top ${TOP}
+ARGS := --binary -j 0 ${ALL_SRC} -Mdir ${TOP}-out --top ${TOP} --trace
 
 .PHONY: compile run clean
 
