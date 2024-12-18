@@ -3,7 +3,6 @@ module synchronizer_ff (  /*AUTOARG*/
     out,
     // Inputs
     in,
-    rst,
     clk
 );
 
@@ -17,7 +16,7 @@ module synchronizer_ff (  /*AUTOARG*/
   parameter int DATA_WIDTH = 4;
   parameter int SYNC_DEPTH = 2;
 
-  input rst, clk;
+  input clk;
 
   input [DATA_WIDTH-1:0] in;
   output [DATA_WIDTH-1:0] out;
@@ -26,14 +25,10 @@ module synchronizer_ff (  /*AUTOARG*/
 
   assign out = sync[SYNC_DEPTH-1];
 
-  always_ff @(posedge clk or negedge rst) begin
-    if (!rst) begin
-      for (int i = 0; i < SYNC_DEPTH; i++) sync[i] <= 0;
-    end else begin
-      sync[0] <= in;
-      for (int i = 1; i < SYNC_DEPTH; i++) begin
-        sync[i] <= sync[i-1];
-      end
+  always_ff @(posedge clk) begin
+    sync[0] <= in;
+    for (int i = 1; i < SYNC_DEPTH; i++) begin
+      sync[i] <= sync[i-1];
     end
   end
 
