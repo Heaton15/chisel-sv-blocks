@@ -42,9 +42,6 @@ module sync_fifo (  /*AUTOARG*/
   logic can_write;
   logic can_read;
 
-
-
-
   // Empty when the pointers are equal
   assign empty = wptr == rptr;
   assign full = (wptr[$clog2(FIFO_DEPTH)] ^ rptr[$clog2(FIFO_DEPTH)]) & (wptr[2:0] == rptr[2:0]);
