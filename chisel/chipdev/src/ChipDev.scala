@@ -5,10 +5,11 @@ import circt.stage.ChiselStage
 import common._
 import chisel3.experimental.dataview._
 
-//The address is a two bit value whose decimal representation determines which output value to use. Append to dout the decimal representation of addr to get the output signal name dout{address decimal value}. For example, if addr=b11 then the decimal representation of addr is 3, so the output signal name is dout3.
-//
-//The input has an enable signal (din_en), which allows the input to be forwarded to an output when enabled. If an output is not currently being driven to, then it should be set to 0.
-//Input and Output Signals
+// The address is a two bit value whose decimal representation determines which output value to use.
+// Append to dout the decimal representation of addr to get the output signal name dout{address decimal value}. For example, if addr=b11 then the decimal representation of addr is 3, so the output signal name is dout3.
+
+// The input has an enable signal (din_en), which allows the input to be forwarded to an output when enabled. If an output is not currently being driven to, then it should be set to 0.
+// Input and Output Signals
 //
 //    din - Input data.
 //    din_en - Enable signal for din. Forwards data from input to an output if 1, does not forward data otherwise.
