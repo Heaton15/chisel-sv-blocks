@@ -5,10 +5,11 @@ import mill.scalalib.scalafmt._
 // Versions
 object v {
   // Dependencies
-  val scalaVersion  = "2.13.14"
-  val chiselVersion = "6.5.0"
+  val scalaVersion  = "2.13.16"
+  val chiselVersion = "7.0.0-RC1"
   val chisel        = ivy"org.chipsalliance::chisel:${chiselVersion}"
   val chiselPlugin  = ivy"org.chipsalliance:::chisel-plugin:${chiselVersion}"
+
 }
 
 trait BaseModule extends ScalaModule {
