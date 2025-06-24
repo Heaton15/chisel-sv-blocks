@@ -11,8 +11,6 @@ module prio_arbiter_lsb_to_msb (  /*AUTOARG*/
   input [SIZE-1:0] req;
   output [SIZE-1:0] gnt;
 
-
-
   logic [SIZE-1:0] higher_prio;
 
   // The trick here is that the moment a bit a higher_prio bit gets set, all bits above it

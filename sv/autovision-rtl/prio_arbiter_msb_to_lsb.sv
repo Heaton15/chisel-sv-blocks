@@ -54,16 +54,18 @@ module tb;
   );
 
   initial begin
-    stimulus(3, 4'b1000);
-    stimulus(3, 4'b1000);
-    stimulus(3, 4'b1000);
-    stimulus(3, 4'b1000);
+    repeat (100) begin
+      int rnd = $urandom_range(0, 3);
+      stimulus(rnd, 4'b0000 | 1 << rnd);
+    end
+    $display("*** PASSED ***");
     $finish;
   end
 
   task automatic stimulus(input int index, input logic [SIZE-1:0] expected);
     req = generate_req(index);
     @(posedge clk);
+    assert (expected[SIZE-1:0] == gnt[SIZE-1:0]);
     $display("req: %b, expected(%b) == gnt(%b)", req[SIZE-1:0], expected[SIZE-1:0], gnt);
   endtask
 
@@ -71,7 +73,7 @@ module tb;
   function automatic logic [SIZE-1:0] generate_req(input int index);
     logic [63:0] rnd;
     rnd = {$urandom, $urandom};
-    return rnd[SIZE-1:0] | (1 << index);
+    return (rnd[SIZE-1:0] >> SIZE - 1 - index) | 1 << index;
   endfunction
 
 endmodule
