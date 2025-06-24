@@ -20,7 +20,9 @@ endmodule
 
 module tb;
 
-  localparam int SIZE = 4;
+  parameter int SIZE = 4;
+
+  /* verilator lint_off UNOPTFLAT */
 
   /*AUTOREGINPUT*/
   // Beginning of automatic reg inputs (for undeclared instantiated-module inputs)
@@ -31,7 +33,9 @@ module tb;
   logic [SIZE-1:0] gnt;  // From dut of prio_arbiter_msb_to_lsb.v
   // End of automatics
 
-  logic clk;
+  /* verilator lint_on UNOPTFLAT */
+
+  logic            clk;
   initial begin
     clk = 0;
     forever begin
@@ -60,7 +64,7 @@ module tb;
   task automatic stimulus(input int index, input logic [SIZE-1:0] expected);
     req = generate_req(index);
     @(posedge clk);
-    $display("req: %b, expected(%b) == gnt(%b)", req[SIZE-1:0], expected[SIZE-1:0], gnt[SIZE-1:0]);
+    $display("req: %b, expected(%b) == gnt(%b)", req[SIZE-1:0], expected[SIZE-1:0], gnt);
   endtask
 
 
