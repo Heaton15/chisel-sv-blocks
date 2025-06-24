@@ -65,7 +65,11 @@ module tb;
   task automatic stimulus(input int index, input logic [SIZE-1:0] expected);
     req = generate_req(index);
     @(posedge clk);
-    assert (expected[SIZE-1:0] == gnt[SIZE-1:0]);
+    if (expected[SIZE-1:0] != gnt[SIZE-1:0]) begin
+      $display("*** FAILED *** expected(%b) != gnt(%b)", expected, gnt);
+      $fatal();
+    end
+
     $display("req: %b, expected(%b) == gnt(%b)", req[SIZE-1:0], expected[SIZE-1:0], gnt);
   endtask
 
