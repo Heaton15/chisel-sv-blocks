@@ -22,7 +22,7 @@ module sync_fifo (  /*AUTOARG*/
   */
 
   // Parameters
-  parameter int FIFO_DEPTH = 8;  // How many entries can be stored in the queue at a time
+  parameter int FIFO_DEPTH = 2;  // How many entries can be stored in the queue at a time
   parameter int DATA_WIDTH = 64;  // How big are the entries in the queue
 
   // I/O
@@ -44,7 +44,7 @@ module sync_fifo (  /*AUTOARG*/
 
   // Empty when the pointers are equal
   assign empty = wptr == rptr;
-  assign full = (wptr[$clog2(FIFO_DEPTH)] ^ rptr[$clog2(FIFO_DEPTH)]) & (wptr[2:0] == rptr[2:0]);
+  assign full = (wptr[$clog2(FIFO_DEPTH)] ^ rptr[$clog2(FIFO_DEPTH)]) & (wptr[$clog2(FIFO_DEPTH)-1:0] == rptr[$clog2(FIFO_DEPTH)-1:0]);
 
   assign can_write = wr_en & !full;
   assign can_read = rd_en & !empty;
@@ -54,7 +54,7 @@ module sync_fifo (  /*AUTOARG*/
       wptr <= 0;
     end else begin
       if (can_write) begin
-        queue[wptr[2:0]] <= din;
+        queue[wptr[$clog2(FIFO_DEPTH)-1:0]] <= din;
         wptr <= wptr + 1'b1;
       end
     end
@@ -65,7 +65,7 @@ module sync_fifo (  /*AUTOARG*/
       rptr <= 0;
     end else begin
       if (can_read) begin
-        dout <= queue[rptr[2:0]];
+        dout <= queue[rptr[$clog2(FIFO_DEPTH)-1:0]];
         rptr <= rptr + 1'b1;
       end
     end
@@ -112,8 +112,6 @@ module tb;
     repeat (20) @(posedge clock);
     $finish;
   end
-
-
 
   sync_fifo #(  /*AUTOINSTPARAMS*/) dut (  /*AUTOINST*/
       // Outputs
