@@ -28,12 +28,14 @@ module sequence_detector (  /*AUTOARG*/
   end
 
   always_comb begin
+    next_state = state;
     case (state)
       S0: next_state = din == 1'b1 ? S1 : S0;
       S1: next_state = din == 1'b0 ? S10 : S1;
       S10: next_state = din == 1'b1 ? S101 : S0;
       S101: next_state = din == 1'b0 ? S1010 : S1;
       S1010: next_state = din == 1'b1 ? S101 : S0;
+      default: next_state = state;
     endcase
   end
 
