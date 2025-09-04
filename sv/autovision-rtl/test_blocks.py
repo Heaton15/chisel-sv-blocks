@@ -15,26 +15,10 @@ from dataclasses import dataclass
 @dataclass
 class BlockCli:
     module: str = "DEFAULT"
-    simulator: str = "verilator"
-    build: bool = False
-    run: bool = False
 
     @classmethod
     def build_parser(cls):
         parser = argparse.ArgumentParser()
-
-        group = parser.add_mutually_exclusive_group()
-
-        group.add_argument(
-            "-b",
-            "--build",
-            action="store_true",
-            help="Request compilation of the testbench",
-        )
-
-        group.add_argument("-r", "--run", action="store_true", help="Run the testbench")
-
-        parser.add_argument("-s", "--simulator", type=str)
         parser.add_argument("-m", "--module", type=str)
         args = parser.parse_args()
         return BlockCli(module=args.module)
