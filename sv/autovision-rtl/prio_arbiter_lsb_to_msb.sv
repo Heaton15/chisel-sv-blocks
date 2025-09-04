@@ -1,3 +1,4 @@
+`timescale 1ns/1ps
 /* The LSB has the highest priority*/
 module prio_arbiter_lsb_to_msb #(
     parameter int SIZE = 4

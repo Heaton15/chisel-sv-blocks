@@ -1,20 +1,62 @@
 `timescale 1ns / 1ns
-module prio_arbiter_msb_to_lsb (  /*AUTOARG*/
+
+/*
+* A nifty MSB to LSB trick is the following:
+  1. Inverse req
+  2. Reverse Req
+  3. Add 1'b1
+  4. Reverse again for result
+  5. gnt = req & result
+*/
+module prio_arbiter_msb_to_lsb #(
+
+    parameter int SIZE = 4
+) (  /*AUTOARG*/
     // Outputs
-    gnt,
+    output logic [SIZE-1:0] gnt,
     // Inputs
-    req
+    input [SIZE-1:0] req
 );
-  parameter int SIZE = 4;
-
-  input [SIZE-1:0] req;
-  output [SIZE-1:0] gnt;
 
 
-  assign gnt[SIZE-1] = req[SIZE-1];
-  for (genvar i = SIZE - 2; i >= 0; i--) begin : g_msb_to_lsb_arbiter
-    assign gnt[i] = ~|gnt[SIZE-1:i+1] & req[i];
+`ifdef comb_arbiter
+
+  for (genvar i = SIZE - 2; i >= 0; i--) begin : g_msb_to_lsb
+    always_comb begin
+      gnt[SIZE-1] = req[SIZE-1];
+      gnt[i] = ~|gnt[SIZE-1:i+1] & req[i];
+    end
   end
+
+`else
+
+
+  wire  [SIZE-1:0] inverse = ~req;
+  logic [SIZE-1:0] reverse;
+
+  always_comb begin
+    reverse = 0;
+    for (int i = 0; i < SIZE; i++) begin
+      reverse[i] = inverse[SIZE-1-i];
+    end
+  end
+
+  wire  [SIZE-1:0] add = reverse + 1'b1;
+
+  logic [SIZE-1:0] reverse2;
+
+  always_comb begin
+    reverse2 = 0;
+    for (int i = 0; i < SIZE; i++) begin
+      reverse2[i] = add[SIZE-1-i];
+    end
+  end
+
+  assign gnt = req & reverse2;
+`endif
+
+
+
 endmodule
 
 
