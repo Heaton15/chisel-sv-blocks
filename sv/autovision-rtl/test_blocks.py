@@ -66,19 +66,9 @@ async def test_prio_arbiter_msb_to_lsb(dut):
     for _ in range(10000):
         await Timer(1)
         rand_req = random.randrange(1, (1 << 4))
-        rand_bin = bin(rand_req)[2:]
-        expected = 0
-        if len(rand_bin) == 1:
-            expected = 1
-        else:
-            size = len(rand_bin)
-            for i, bit in enumerate(rand_bin):
-                logger.debug(f"bit: {bit}, i: {i}, rand_bin[i]: {rand_bin[i]}")
-                if bit == "1":
-                    expected = 1 << size - 1
-                    break
-                else:
-                    size -= 1
+
+        # The length of rand_req is the MSB bit anyways, so that makes this easy.
+        expected = 1 << (rand_req.bit_length() - 1) if rand_req > 0 else 0
 
         dut.req.value = rand_req
         await Timer(1)
