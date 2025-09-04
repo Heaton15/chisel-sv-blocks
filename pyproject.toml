@@ -1,0 +1,15 @@
+[project]
+name = "chisel-sv-blocks"
+version = "0.1.0"
+description = "Chisel / SV Block Design and Simulation"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "bitvector>=3.5.0",
+    "cocotb==2.0.0b1",
+    "gitpython>=3.1.45",
+    "pynvim>=0.5.2",
+    "pyright>=1.1.405",
+    "pytest>=8.4.2",
+    "ruff>=0.12.11",
+]
