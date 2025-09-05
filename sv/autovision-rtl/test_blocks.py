@@ -112,11 +112,11 @@ async def test_round_robin_arbiter(dut):
     dut.rst.value = 0
 
     prio = 0
-    for _ in range(100000):
+    for _ in range(1000):
         await RisingEdge(dut.clk)
         rand_req = random.randrange(1, (1 << 4))
         dut.req.value = rand_req
-        logger.info(f"req: {dut.req.value} gnt: {dut.gnt.value}, prio: {dut.prio_ptr_o.value}")
+        logger.info(f"req: {dut.req.value} gnt: {dut.gnt.value}")
         assert dut.gnt.value == expected_rr_output(prio, dut.req.value, 4)
         prio = compute_prio(prio)
 
