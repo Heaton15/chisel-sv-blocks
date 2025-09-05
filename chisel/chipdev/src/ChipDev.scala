@@ -4,6 +4,12 @@ import chisel3._
 import circt.stage.ChiselStage
 import common._
 import chisel3.experimental.dataview._
+import chisel3.util.log2Ceil
+import chisel3.util.switch
+import chisel3.util.is
+import chisel3.util.Cat
+import chisel3.util.Reverse
+import chisel3.util.Fill
 
 // The address is a two bit value whose decimal representation determines which output value to use.
 // Append to dout the decimal representation of addr to get the output signal name dout{address decimal value}. For example, if addr=b11 then the decimal representation of addr is 3, so the output signal name is dout3.
@@ -91,6 +97,41 @@ class RoundingDivision(divLog2: Int, outWidth: Int) extends Module {
 
 }
 
+class LsbPrioArbiter(size: Int) extends RawModule {
+  val req = IO(Input(UInt(size.W)))
+  val gnt = IO(Output(UInt(size.W)))
+  val arb = req & (~req + 1.U)
+  gnt :<= arb
+}
+
+object LsbPrioArbiter {
+  def apply(req: Data): UInt = {
+    val arb = Module(new LsbPrioArbiter(req.getWidth))
+    arb.req :<= req.asTypeOf(arb.req)
+    arb.gnt
+  }
+}
+
+class RoundRobinArbiter(size: Int) extends RawModule {
+  // Round Robin Arbiter can be a sneaky implementation in verilog. Can we do
+  // the case statement?
+
+  val req = IO(Input(UInt(size.W)))
+  val gnt = IO(Output(UInt(size.W)))
+  val clk = IO(Input(Clock()))
+  val rst = IO(Input(Bool()))
+
+  val reg_ptr = withClockAndReset(clk, rst) { RegInit(UInt(log2Ceil(size).W), 0.U) }
+  val req_tmp = withClockAndReset(clk, rst) { Wire(UInt(size.W))}
+
+  reg_ptr :<= reg_ptr + 1.U
+
+  req_tmp :<= Cat(req, req).rotateRight(reg_ptr).tail(4)
+  val prio_arb = LsbPrioArbiter(req_tmp)
+  gnt :<= Cat(prio_arb, prio_arb).rotateLeft(reg_ptr).head(4)
+
+}
+
 object Main extends App {
 
   ChiselStage.emitSystemVerilog(
@@ -105,6 +146,11 @@ object Main extends App {
 
   ChiselStage.emitSystemVerilog(
     new RoundingDivision(3, 5),
+    firtoolOpts = FirtoolOpts.firtoolOpts,
+  )
+
+  ChiselStage.emitSystemVerilog(
+    new RoundRobinArbiter(size = 4),
     firtoolOpts = FirtoolOpts.firtoolOpts,
   )
 }
