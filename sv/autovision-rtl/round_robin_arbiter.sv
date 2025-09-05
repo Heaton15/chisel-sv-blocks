@@ -36,13 +36,5 @@ module round_robin_arbiter #(
   wire [SIZE-1:0] tmp = req_tmp[0] & (~req_tmp[0] + 1'b1);
 
   assign {gnt, gnt_tmp} = {2{tmp}} << prio_ptr;
-
-
-
-
-
-
-
-
 endmodule
 
