@@ -126,9 +126,9 @@ class RoundRobinArbiter(size: Int) extends RawModule {
 
   reg_ptr :<= reg_ptr + 1.U
 
-  req_tmp :<= Cat(req, req).rotateRight(reg_ptr).tail(4)
+  req_tmp :<= Cat(req, req).rotateRight(reg_ptr).tail(size)
   val prio_arb = LsbPrioArbiter(req_tmp)
-  gnt :<= Cat(prio_arb, prio_arb).rotateLeft(reg_ptr).head(4)
+  gnt :<= Cat(prio_arb, prio_arb).rotateLeft(reg_ptr).head(size)
 
 }
 
