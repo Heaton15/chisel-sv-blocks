@@ -34,6 +34,7 @@ def testbench(top_module: str):
     sources = [proj_dir / "prio_arbiter_lsb_to_msb.sv"]
     sources.append(proj_dir / "prio_arbiter_msb_to_lsb.sv")
     sources.append(proj_dir / "round_robin_arbiter.sv")
+    sources.append(proj_dir / "sync_fifo.sv")
     defines = {}
 
     runner = get_runner(sim)
@@ -119,6 +120,53 @@ async def test_round_robin_arbiter(dut):
         logger.info(f"req: {dut.req.value} gnt: {dut.gnt.value}")
         assert dut.gnt.value == expected_rr_output(prio, dut.req.value, 4)
         prio = compute_prio(prio)
+
+
+async def sync_in(dut, gold_data: list[int]):
+    cnt = 0
+    dut.wr_en.value = 1
+    dut.data_i.value = gold_data[0]
+
+    while True:
+        if not dut.full.value:
+            dut.data_i.value = gold_data[cnt]
+            cnt += 1
+        if cnt == 1000:
+            return
+        await RisingEdge(dut.clk)
+
+
+async def sync_out(dut) -> list[int]:
+    cnt = 0
+    rx = []
+    dut.rd_en.value = 1
+
+    while True:
+        if not dut.empty.value:
+            await Timer(1)
+            rx.append(int(dut.data_o.value))
+            cnt += 1
+        if cnt == 1000:
+            return rx
+        await RisingEdge(dut.clk)
+
+
+@cocotb.test()
+async def test_sync_fifo(dut):
+    dut.rst.value = 1
+    logger = logging.getLogger("test")
+    gold = [random.randint(0, 1 << 16) for _ in range(1000)]
+    cocotb.start_soon(clock(dut))
+    await RisingEdge(dut.clk)
+    dut.rst.value = 0
+
+    cocotb.start_soon(sync_in(dut, gold))
+    rx = await cocotb.start_soon(sync_out(dut))
+
+    assert len(gold) == len(rx)
+    for g, rec in zip(gold, rx):
+        logger.info(f"gold: {hex(g)} rec: {hex(rec)}")
+        assert hex(g) == hex(rec)
 
 
 if __name__ == "__main__":
