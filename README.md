@@ -2,13 +2,16 @@
 
 # Blocks
 - sync fifo [x]
-- async fifo
-- CDC design
-- round-robin arbiter
+- async fifo [x]
+- CDC design [x]
+- round-robin arbiter [x]
+- re-order buffer
+- branch predictor
 - weighted arbiter
 - glitch-free clock mux
 - SPI controller
 - I2C controller
+- JTAG TAP Controller
 - grey code counter
 - edge detector
 - parallel-in, serial-out SR
@@ -35,5 +38,3 @@
 ## Binary to Grey
 1. MSB of Gray and Binary are the same g[MSB] = b[MSB]
 1. The gray bits are then the xor of the binary b[i] ^ b[i+1]
-
-
