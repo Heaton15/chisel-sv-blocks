@@ -97,3 +97,76 @@ module prefix_adder #(
   assign cout = G[16] || (P[16] && (G4[15]));
 
 endmodule
+module prefix_adder_param #(
+    parameter int DATA_SIZE = 16
+) (
+
+    input [DATA_SIZE-1:0] a,
+    b,
+
+    output logic [DATA_SIZE-1:0] s,
+    output cout
+
+);
+
+
+  localparam K_TREE_DEPTH = $clog2(DATA_SIZE);
+  /* verilator lint_off UNOPTFLAT */
+
+
+  // DATA_SIZE+1 entries to account for the -1 index
+  logic [DATA_SIZE:0] P, G;
+
+  // Stage 1: Pre-compute the P / G values for the adder
+  assign P = {a | b, 1'b0};
+  assign G = {a & b, 1'b0};
+
+  // Stage 2: Create the K-Tree
+  logic [$clog2(DATA_SIZE)-1:0][DATA_SIZE-1:0] Pk;
+  logic [$clog2(DATA_SIZE)-1:0][DATA_SIZE-1:0] Gk;
+
+  // k = 0;
+  always_comb begin
+    for (int i = 0; i < 16; i += 2) begin
+      for (int j = 0; j < 2; j++) begin
+        if (j == 0) begin
+          Pk[0][i+j] = P[i+j];
+          Gk[0][i+j] = G[i+j];
+        end else begin
+          Pk[0][i+j] = P[i+j] && P[i];
+          Gk[0][i+j] = G[i+j] || (P[i+j] && G[i]);
+        end
+      end
+    end
+  end
+
+  for (genvar k = 1; k < $clog2(DATA_SIZE); k++) begin : g_k_tree
+    always_comb begin
+      for (int i = 0; i < DATA_SIZE; i += (2 ** k) * 2) begin
+        for (int j = 0; j < ((2 ** k) * 2); j++) begin
+          if (j < 2 ** k) begin
+            Pk[k][i+j] = Pk[k-1][i+j];
+            Gk[k][i+j] = Gk[k-1][i+j];
+          end else begin
+            Pk[k][i+j] = Pk[k-1][i+j] && Pk[k-1][i+(2**k)-1];
+            Gk[k][i+j] = Gk[k-1][i+j] || (Pk[k-1][i+j] && Gk[k-1][i+(2**k)-1]);
+          end
+        end
+      end
+    end
+  end
+
+  // Stage 3: Compute sums
+  always_comb begin
+    for (int i = 0; i < DATA_SIZE; i++) begin
+      s[i] = a[i] ^ b[i] ^ Gk[3][i];
+    end
+  end
+
+  // We compute cout by determining if the S15 value generates a carry or if it propagates 
+  // one from the G14:-1 stage.
+  assign cout = G[16] || (P[16] && (Gk[3][15]));
+
+  /* verilator lint_on UNOPTFLAT */
+endmodule
+
