@@ -34,6 +34,7 @@ def testbench(top_module: str):
     sources = [proj_dir / "fa/full_adder.sv"]
     sources.append(proj_dir / "rca/ripple_carry_adder.sv")
     sources.append(proj_dir / "cla/carry_lookahead_adder.sv")
+    sources.append(proj_dir / "prefix/prefix_adder.sv")
     defines = {}
 
     runner = get_runner(sim)
@@ -87,6 +88,7 @@ async def test_ripple_carry_adder(dut):
         assert result.int_val() == out[i].int_val()
         await Timer(1, unit="ns")
 
+
 @cocotb.test()
 async def test_carry_lookahead_adder(dut):
     logger = logging.getLogger("test")
@@ -117,6 +119,40 @@ async def test_carry_lookahead_adder(dut):
         )
         assert result.int_val() == out[i].int_val()
         await Timer(1, unit="ns")
+
+
+@cocotb.test()
+async def test_prefix_adder(dut):
+    logger = logging.getLogger("test")
+    SAMPLES = 1 << 10
+    N = 16
+    a = [
+        BitVector(intVal=random.randint(0, (1 << N) - 1), size=N)
+        for _ in range(SAMPLES)
+    ]
+    b = [
+        BitVector(intVal=random.randint(0, (1 << N) - 1), size=N)
+        for _ in range(SAMPLES)
+    ]
+    out = [
+        BitVector(intVal=a[i].int_val() + b[i].int_val(), size=N + 1)
+        for i in range(SAMPLES)
+    ]
+    for i in range(SAMPLES):
+        dut.a.value = a[i].int_val()
+        dut.b.value = b[i].int_val()
+        await Timer(1, unit="ns")
+        logger.info(
+            f"a:{a[i]}, b:{b[i]}, s: {out[i]} ({int(a[i])} + {int(b[i])} = {int(out[i])})"
+        )
+        result = BitVector(intVal=dut.cout.value, size=1) + BitVector(
+            intVal=dut.s.value, size=N
+        )
+        logger.info(f"\nexpected ({bin(out[i].int_val())})\nreceived ({bin(result.int_val())})")
+        assert result.int_val() == out[i].int_val()
+        await Timer(1, unit="ns")
+
+
 
 
 if __name__ == "__main__":
