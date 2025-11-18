@@ -12,6 +12,7 @@ from cocotb.triggers import RisingEdge, Timer
 from cocotb_tools.runner import get_runner
 from dataclasses import dataclass
 from BitVector import BitVector
+from enum import Enum, auto
 
 
 @dataclass
@@ -27,7 +28,7 @@ class BlockCli:
 
 
 def testbench(top_module: str):
-    build_args = []
+    build_args = ["--timing"]
 
     sim = os.getenv("SIM", "verilator")
     proj_dir = Path(__file__).parent
@@ -35,6 +36,7 @@ def testbench(top_module: str):
     sources.append(proj_dir / "rca/ripple_carry_adder.sv")
     sources.append(proj_dir / "cla/carry_lookahead_adder.sv")
     sources.append(proj_dir / "prefix/prefix_adder.sv")
+    sources.append(proj_dir / "alu/alu.sv")
     defines = {}
 
     runner = get_runner(sim)
@@ -148,11 +150,80 @@ async def test_prefix_adder(dut):
         result = BitVector(intVal=dut.cout.value, size=1) + BitVector(
             intVal=dut.s.value, size=N
         )
-        logger.info(f"\nexpected ({bin(out[i].int_val())})\nreceived ({bin(result.int_val())})")
+        logger.info(
+            f"\nexpected ({bin(out[i].int_val())})\nreceived ({bin(result.int_val())})"
+        )
         assert result.int_val() == out[i].int_val()
         await Timer(1, unit="ns")
 
 
+class AluInstruction(Enum):
+    ADD = 0
+    """ Add instruction """
+
+    SUB = auto()
+    """ SUB instruction """
+
+    AND = auto()
+    """ AND instruction """
+
+    OR = auto()
+    """ OR instruction """
+
+
+@dataclass
+class InstructionGenerator:
+    a: int
+    """ a `input` to ALU """
+
+    b: int
+    """ b `input` to ALU"""
+
+    out: int
+    """ out `output` from the ALU"""
+
+    opcode: int
+    """ INSTR Opcode """
+
+    @classmethod
+    def rand_instruction(cls, N: int):
+        instr = random.choice(list(AluInstruction))
+        a = BitVector(intVal=random.randint(0, (1 << N) - 1), size=N).int_val()
+        b = BitVector(intVal=random.randint(0, (1 << N) - 1), size=N).int_val()
+        match instr:
+            case AluInstruction.ADD:
+                return cls(a=a, b=b, out=a + b, opcode=instr.value)
+            case AluInstruction.SUB:
+                return cls(a=a, b=b, out=a - b, opcode=instr.value)
+            case AluInstruction.AND:
+                return cls(a=a, b=b, out=a & b, opcode=instr.value)
+            case AluInstruction.OR:
+                return cls(a=a, b=b, out=a | b, opcode=instr.value)
+            case other:
+                raise KeyError(
+                    f"Field {other} is not matched on in the random instruction generator"
+                )
+
+
+@cocotb.test()
+async def test_alu(dut):
+    logger = logging.getLogger("test")
+    # SAMPLES = 1 << 10
+    SAMPLES = 1 << 10
+    N = 16
+
+    instrs = [InstructionGenerator.rand_instruction(N) for _ in range(SAMPLES)]
+
+    for i in instrs:
+        dut.a.value = i.a
+        dut.b.value = i.b
+        dut.alu_inst.value = i.opcode
+        await Timer(1, unit="ns")
+        logger.info(
+            f"INSTR: {AluInstruction(i.opcode)} a: {i.a}, b: {i.b}, exp_out: {i.out}, real_out: {int(dut.z.value)}"
+        )
+        await Timer(1, unit="ns")
+        assert i.out == int(dut.z.value)
 
 
 if __name__ == "__main__":
