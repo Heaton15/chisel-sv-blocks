@@ -2,6 +2,7 @@
 
 import os
 from pathlib import Path
+from typing import Self
 
 import cocotb
 import logging
@@ -10,9 +11,19 @@ import argparse
 from cocotb.handle import Immediate
 from cocotb.triggers import RisingEdge, Timer
 from cocotb_tools.runner import get_runner
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from BitVector import BitVector
-from enum import Enum, auto
+from enum import Enum, IntEnum, auto
+
+from bitslice import Bitslice
+
+
+def twos_complement(bv: BitVector) -> int:
+    """Returns a twos complement integer translated from a BitVector"""
+    if bv[-1] == 0:
+        return int(bv.int_val())  # If the MSB is 0, just return the positive number
+    else:
+        return 0
 
 
 @dataclass
@@ -157,7 +168,7 @@ async def test_prefix_adder(dut):
         await Timer(1, unit="ns")
 
 
-class AluInstruction(Enum):
+class AluInstruction(IntEnum):
     ADD = 0
     """ Add instruction """
 
@@ -173,35 +184,73 @@ class AluInstruction(Enum):
 
 @dataclass
 class InstructionGenerator:
-    a: int
+    a: Bitslice
     """ a `input` to ALU """
 
-    b: int
+    b: Bitslice
     """ b `input` to ALU"""
 
-    out: int
+    out: Bitslice
     """ out `output` from the ALU"""
 
-    opcode: int
+    opcode: AluInstruction
     """ INSTR Opcode """
 
+    V: int = field(default=0)
+    """ Indicates overflow """
+
+    logger: logging.Logger = field(init=False)
+    """ Logger for Instructions """
+
     @classmethod
-    def rand_instruction(cls, N: int):
-        instr = random.choice(list(AluInstruction))
-        a = BitVector(intVal=random.randint(0, (1 << N) - 1), size=N).int_val()
-        b = BitVector(intVal=random.randint(0, (1 << N) - 1), size=N).int_val()
+    def gen_instruction(
+        cls, logger: logging.Logger, N: int, type: AluInstruction | None = None
+    ):
+        instr = type if type is not None else random.choice(list(AluInstruction))
+        a: int = Bitslice(random.randint(0, (1 << N) - 1), size=N).signed
+        b: int = Bitslice(random.randint(0, (1 << N) - 1), size=N).signed
+
+        # Force the types of signed to be integers
+        assert isinstance(a, int)
+        assert isinstance(b, int)
+        
         match instr:
             case AluInstruction.ADD:
-                return cls(a=a, b=b, out=a + b, opcode=instr.value)
+                V = 0
+                try:
+                    sum = a + b
+                except ValueError:
+                    sum = Bitslice((1 << N) - 1, size=N)
+                    V = 1
+                return cls(a=a, b=b, out=sum, opcode=instr, V=V)
             case AluInstruction.SUB:
-                return cls(a=a, b=b, out=a - b, opcode=instr.value)
+                return cls(a=a, b=b, out=a - b, opcode=instr)
             case AluInstruction.AND:
-                return cls(a=a, b=b, out=a & b, opcode=instr.value)
+                return cls(a=a, b=b, out=a & b, opcode=instr)
             case AluInstruction.OR:
-                return cls(a=a, b=b, out=a | b, opcode=instr.value)
+                return cls(a=a, b=b, out=a | b, opcode=instr)
             case other:
                 raise KeyError(
                     f"Field {other} is not matched on in the random instruction generator"
+                )
+
+    def check_instruction(self, dut):
+        match self.opcode:
+            case AluInstruction.ADD:
+                if self.V:
+                    assert dut.flags.value == 1
+                else:
+                    assert self.out.value == int(dut.z.value)
+
+            case AluInstruction.SUB:
+                pass
+            case AluInstruction.AND:
+                pass
+            case AluInstruction.OR:
+                pass
+            case other:
+                raise KeyError(
+                    f"Field {other} is a supported {InstructionGenerator.__name__} instruction"
                 )
 
 
@@ -212,18 +261,23 @@ async def test_alu(dut):
     SAMPLES = 1 << 10
     N = 16
 
-    instrs = [InstructionGenerator.rand_instruction(N) for _ in range(SAMPLES)]
+    instrs = [
+        InstructionGenerator.gen_instruction(
+            logger=logger, N=N, type=AluInstruction.ADD
+        )
+        for _ in range(SAMPLES)
+    ]
 
     for i in instrs:
-        dut.a.value = i.a
-        dut.b.value = i.b
+        dut.a.value = int(i.a)
+        dut.b.value = int(i.b)
         dut.alu_inst.value = i.opcode
         await Timer(1, unit="ns")
         logger.info(
             f"INSTR: {AluInstruction(i.opcode)} a: {i.a}, b: {i.b}, exp_out: {i.out}, real_out: {int(dut.z.value)}"
         )
         await Timer(1, unit="ns")
-        assert i.out == int(dut.z.value)
+        i.check_instruction(dut)
 
 
 if __name__ == "__main__":

@@ -5,6 +5,7 @@ description = "Chisel / SV Block Design and Simulation"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "bitslice>=0.3.0",
     "bitvector>=3.5.0",
     "cocotb>=2.0.0",
     "gitpython>=3.1.45",

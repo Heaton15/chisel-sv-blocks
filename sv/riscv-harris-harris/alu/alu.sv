@@ -24,18 +24,19 @@ module alu
     parameter int N = 16
 ) (
 
-    input [N-1:0] a,
+    input signed [N-1:0] a,
     b,
     input alu_e alu_inst,
 
-    output [N:0] z
+    output signed [N:0] z,
+    output alu_flags flags
 );
 
-  alu_flags flags;
 
   always_comb begin
     flags.N = z[N-1];
     flags.Z = |z == '0;
+    flags.V = 1'b0;
     if (alu_inst inside {ADD, SUB}) flags.C = z[N] == 1'b1;
     if (z[N-1] ^ z[N-1]) begin
       if ((alu_inst inside {ADD} && a[N-1] == b[N-1]) || (alu_inst inside {SUB} && a[N-1] ^ b[N-1]))
